@@ -94,3 +94,6 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+# NOTE: replace this with something more secure upon deployment
+runnerApiPassword: 'abc123'

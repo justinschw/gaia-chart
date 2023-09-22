@@ -13,8 +13,12 @@ spec:
       {{- include "..gaiaSelectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
+        runner-api-secret/hash: {{ .Values.runnerApiPassword | sha1sum | quote }}
+        {{- if .Values.database.externalUri }}
+        database.externalUri/hash: {{ .Values.database.externalUri | sha1sum | quote }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
@@ -33,11 +37,18 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - secretRef:
+                name: runner-api-secret
+            {{- if .Values.database.externalUri }}
+            - secretRef:
+                name: gaia-uri
+            {{- end }}
           env:
+            {{- if not .Values.database.externalUri }}
            - name: GAIA_MONGODB_URI
              value: "mongodb://gaia-database:27017/gaia"
-           - name: GAIA_RUNNER_API_PASSWORD
-             value: "1234"
+            {{- end }}
            - name: LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_DATA_MONGODB
              value: WARN
            - name: GAIA_EXTERNAL_URL

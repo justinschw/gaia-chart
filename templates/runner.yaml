@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "..fullname" . }}-runner
+  annotations:
+    runner-api-secret/hash: {{ .Values.runnerApiPassword | sha1sum | quote }}
   labels:
     {{- include "..labels" . | nindent 4 }}
 spec:
@@ -33,12 +35,13 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.runner.image.repository }}:{{ .Values.runner.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.runner.image.pullPolicy }}
+          envFrom:
+            - secretRef:
+                name: runner-api-secret
           env:
           # on dirait que la properties est obligatoire ?
           - name: GAIA_RUNNER_EXECUTOR
             value: k8s
-          - name: GAIA_RUNNER_API_PASSWORD
-            value: "1234"
           - name: GAIA_URL
             value: http://gaia:80
           resources:
